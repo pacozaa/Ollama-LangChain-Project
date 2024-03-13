@@ -1,12 +1,13 @@
 {
-  "name": "typescript-project",
+  "name": "ollama-langchain",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "index": "npx tsc && node dist/index"
+    "index": "npx tsc && node dist/index",
+    "rag": "npx tsc && node dist/rag"
   },
   "keywords": [],
   "author": "",
