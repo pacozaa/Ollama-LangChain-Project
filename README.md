@@ -6,10 +6,13 @@
 npm install
 ```
 
-## Run
+## Run RAG Example
 
 ```
 npm run rag
+```
 
+## Run Basic Inference/API call to Ollama
+```
 npm run index
 ```
