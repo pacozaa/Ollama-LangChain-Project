@@ -1,9 +1,8 @@
 // From https://js.langchain.com/docs/get_started/quickstart
-
+// https://huggingface.co/learn/cookbook/advanced_rag
 //Import Lib
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Document } from "langchain/document";
@@ -12,29 +11,11 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 
-const outputParser = new StringOutputParser();
-
-// const prompt = ChatPromptTemplate.fromMessages([
-//     ["system", "You are a world class technical documentation writer."],
-//     ["user", "{input}"],
-// ]);
 
 const chatModel = new ChatOllama({
     baseUrl: "http://localhost:11434", // Default value
     model: "llama2",
 });
-
-// const response = await chatModel.invoke("What is Palo IT");
-// console.log(response)
-// const chain = prompt.pipe(chatModel).pipe(outputParser);
-
-// const response = await chain.invoke({
-//     input: "What is Palo IT",
-// });
-
-// console.log(response)
-// Chat model
-
 
 //1. Create folder 
 // 2. Find a nice pdf 
@@ -66,6 +47,15 @@ const embeddings = new OllamaEmbeddings({
     model: "llama2",
     maxConcurrency: 5,
 });
+/** Alternative Embedding, Faster?
+const embeddings = new HuggingFaceTransformersEmbeddings({
+    modelName: "Xenova/all-MiniLM-L6-v2",
+    maxConcurrency: 3
+});
+ * 
+ * 
+ */
+
 // 2. Create Vector Store Object
 
 
@@ -77,20 +67,21 @@ const vectorstore = await MemoryVectorStore.fromDocuments(
 
 //Stuff Doc Chain
 const prompt =
-    ChatPromptTemplate.fromTemplate(`Answer the following question based only on the provided context:
+    ChatPromptTemplate.fromTemplate(`
+    Answer the following question based only on the provided context:
 
 <context>
 {context}
 </context>
 
 Question: {input}`);
-
+//Basic Chain
 const documentChain = await createStuffDocumentsChain({
     llm: chatModel,
     prompt,
 });
 
-const retriever = vectorstore.asRetriever();
+const retriever = vectorstore.asRetriever();//4 fetch top 4 similarity result 
 
 // Retrieve Chain
 const retrievalChain = await createRetrievalChain({
