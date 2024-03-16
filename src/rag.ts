@@ -10,7 +10,11 @@ import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
-
+import {
+    AzureAISearchVectorStore,
+    AzureAISearchQueryType,
+} from "@langchain/community/vectorstores/azure_aisearch";
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
 
 const chatModel = new ChatOllama({
     baseUrl: "http://localhost:11434", // Default value
@@ -43,27 +47,32 @@ console.log(`Average length among ${docs.length} documents (after split) is ${av
 
 //Set up Vector Store
 // 1. Create Embedding Object
-const embeddings = new OllamaEmbeddings({
-    model: "llama2",
-    maxConcurrency: 5,
-});
-/** Alternative Embedding, Faster?
+// const embeddings = new OllamaEmbeddings({
+//     model: "llama2",
+//     maxConcurrency: 5,
+// });
+// Alternative Embedding, Faster?
 const embeddings = new HuggingFaceTransformersEmbeddings({
     modelName: "Xenova/all-MiniLM-L6-v2",
     maxConcurrency: 3
 });
- * 
- * 
- */
 
 // 2. Create Vector Store Object
 
-
-const vectorstore = await MemoryVectorStore.fromDocuments(
+//https://learn.microsoft.com/en-us/azure/search/search-query-lucene-examples#example-1-fielded-search
+const vectorstore = await AzureAISearchVectorStore.fromDocuments(
     splitDocs,
-    embeddings
+    embeddings,
+    {
+        indexName: 'coolVector',
+        search: {
+            type: AzureAISearchQueryType.SimilarityHybrid,
+        },
+    }
 );
 
+
+console.log({vectorstore})
 
 //Stuff Doc Chain
 const prompt =
@@ -81,7 +90,7 @@ const documentChain = await createStuffDocumentsChain({
     prompt,
 });
 
-const retriever = vectorstore.asRetriever();//4 fetch top 4 similarity result 
+const retriever = vectorstore.asRetriever({verbose: true});//4 fetch top 4 similarity result 
 
 // Retrieve Chain
 const retrievalChain = await createRetrievalChain({
@@ -94,4 +103,4 @@ const result = await retrievalChain.invoke({
 });
 
 console.log("================================\n\n\n");
-console.log(result.answer);
+console.log(result);
